@@ -3,6 +3,7 @@ import json
 from datetime import datetime, timezone, timedelta
 from functools import lru_cache
 
+
 def formatEndDate(st):
     if st is None:
         return (None, None)
@@ -26,30 +27,51 @@ def get_headers():
     headers = {h[0]: h[1].strip() for h in hdump}
     return headers
 
+
+country_codes = {
+    "SI": "Slovenija",
+    "HR": "Hrvaška",
+    "AT": "Avstrija",
+    "HU": "Madžarska",
+    "IT": "Italija",
+    "DE": "Nemčija",
+    "RS": "Srbija",
+    "CH": "Švica",
+    "BA": "Bosna in Hercegovina",
+}
+
+
 @lru_cache(maxsize=None)
-def veljavnost(registrska: str):
+def veljavnost(registrska: str, drzava: str):
+    print(registrska, drzava)
     today = datetime.now()
     one_year_after = today + timedelta(days=365)
     payload["registrationNumber"] = registrska
     payload["registrationNumberAgain"] = registrska
     payload["vignetteValidityStart"] = today.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    payload["vignetteValidityEnd"] = one_year_after.strftime(
-        "%Y-%m-%dT%H:%M:%S.%f0%z")
+    payload["vignetteValidityEnd"] = one_year_after.strftime("%Y-%m-%dT%H:%M:%S.%f0%z")
+    payload["registrationCountryCode"] = {
+        "text": country_codes[drzava],
+        "value": drzava,
+        "codebook": "Country",
+    }
+    print("\n", payload, "\n------------------\n\n\n")
     r = requests.post(purl, json=payload, headers=get_headers(), verify=False)
     # print("\n"+r.text+"\n------------------\n\n\n")
     print(r.status_code, r.reason, r.url)
     return r.json()
 
 
-def aux(registrska):
-    registrska = registrska.upper().replace(" ", "").replace("-", "").strip()
-    if len(registrska) > 8 or len(registrska) < 5 or not registrska.isalnum():
-        return None
-    if registrska == "FTEST":
-        t = 1/0
-    if registrska[:3] == "XXX":
-      return None
-    jdump = veljavnost(registrska)["vignetteValidationResult"]
+def aux(registrska, drzava="SI"):
+    if drzava == "SI":
+        registrska = registrska.upper().replace(" ", "").replace("-", "").strip()
+        if len(registrska) > 8 or len(registrska) < 5 or not registrska.isalnum():
+            return None
+        if registrska == "FTEST":
+            t = 1 / 0
+        if registrska[:3] == "XXX":
+            return None
+    jdump = veljavnost(registrska, drzava)["vignetteValidationResult"]
     if "exemptedVehicles" in jdump and len(jdump["exemptedVehicles"]) > 0:
         return f'Oproščeno {jdump["exemptedVehicles"][0]["exemptionReasonId"]["text"]}'
 
