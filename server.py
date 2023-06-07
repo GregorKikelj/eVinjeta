@@ -116,6 +116,9 @@ def apcall_global():
 
 @app.route("/", methods=["GET"])
 def index():
+    user_language = request.accept_languages.best_match(["sl", "en"])
+    if user_language == "en":
+        return render_template("index_global.html")
     app.logger.info("Zahteva za domačo stran")
     # discordLog(f"Zahteva za domačo stran ob {niceTime()}")
     return render_template("index.html")
