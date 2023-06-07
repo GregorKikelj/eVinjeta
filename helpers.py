@@ -57,7 +57,7 @@ def veljavnost(registrska: str, drzava: str):
     }
     print("\n", payload, "\n------------------\n\n\n")
     r = requests.post(purl, json=payload, headers=get_headers(), verify=False)
-    # print("\n"+r.text+"\n------------------\n\n\n")
+    print("\n"+r.text+"\n------------------\n\n\n")
     print(r.status_code, r.reason, r.url)
     return r.json()
 

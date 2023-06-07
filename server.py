@@ -73,46 +73,29 @@ def static_from_root():
     return send_from_directory(app.static_folder, request.path[1:])
 
 
+@app.route("/global", methods=["POST"])
 @app.route("/", methods=["POST"])
 def apcall():
     if "headers" in request.form:
         setHeaders(request)
         return "OK"
     registrska = request.form["registrska"]
-    try:
-        ar = aux(registrska)
-        app.logger.info(
-            f'Registrska "{registrska}" je veljavna do {ar} ob {niceTime()}'
-        )
-        # discordLog(f"Registrska \"{registrska}\" je veljavna do {ar} ob {niceTime()}")
-        return render_template("index.html", valid_until=ar, license_plate=registrska)
-    except Exception as e:
-        spamDiscord(str(e))
-        app.logger.error(f"\nNapaka pri {registrska} ob {niceTime()}")
-        # discordLog(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!\nNapaka pri {registrska} ob {niceTime()}")
-        return render_template("failure.html")
-
-
-@app.route("/global", methods=["POST"])
-def apcall_global():
-    print(request.form)
-    registrska = request.form["registrska"]
-    drzava = request.form["drzava"]
+    drzava = request.form.get("drzava", "SI")
     try:
         ar = aux(registrska, drzava)
         app.logger.info(
             f'Registrska "{registrska}" je veljavna do {ar} ob {niceTime()}'
         )
         # discordLog(f"Registrska \"{registrska}\" je veljavna do {ar} ob {niceTime()}")
-        return render_template(
-            "index_global.html", valid_until=ar, license_plate=registrska
-        )
+        user_language = request.accept_languages.best_match(["sl", "en"])
+        if user_language == "en":
+            return render_template("index_global.html", valid_until=ar, license_plate=registrska)
+        return render_template("index.html", valid_until=ar, license_plate=registrska)
     except Exception as e:
         spamDiscord(str(e))
         app.logger.error(f"\nNapaka pri {registrska} ob {niceTime()}")
         # discordLog(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!\nNapaka pri {registrska} ob {niceTime()}")
         return render_template("failure.html")
-
 
 @app.route("/", methods=["GET"])
 def index():
